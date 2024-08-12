@@ -1,0 +1,16 @@
+[
+  {
+    "BaseAsset": "0xB26f934201809Ae5504f5958262Cd02EeE3F89a5",
+    "WrapperAsset": "0x4d7361bD98eaa9c789109F1944608b4C7F4Eb0Ca",
+    "Marketplace": "0x588cd5100CF1824359588734ba61DF3914a4A3dE"
+  },
+  {
+    "PolytradeBaseAsset": "0x050b241216e9FA85B442b59387F7079B7c7A8BAe",
+    "PolytradeWrapperAsset": "0x77dA118f1F1d84DF3BBA5aa50BFA6863C7666D43",
+    "PolytradeMarketplace": "0x6Cc9CF0e429a2aa2814c3A3571B91b341F76A50C"
+  },
+  {
+    "PolytradeInvoiceAsset": "0x8792B9a7e4f8961746378808d8f55Cc6BB17Fc39",
+    "PolytradePropertyAsset": "0xfa31Ba58339369471C12e5910CF66F9e4D673302"
+  }
+]
