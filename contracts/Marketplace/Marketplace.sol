@@ -408,10 +408,7 @@ contract Marketplace is
         address receiver = owner;
         uint256 payPrice = listedAssetInfo.fractionPriceInToken *
             fractionsToBuy;
-        uint256 fee = _baseAsset.getAssetInfo(mainId, subId).initialOwner !=
-            owner
-            ? _feeManager.getBuyingFee(mainId, subId)
-            : _feeManager.getInitialFee(mainId, subId);
+        uint256 fee = _feeManager.getBuyingFee(mainId, subId);
         fee = (payPrice * fee) / 1e4;
 
         if (listedFractions == fractionsToBuy) {
@@ -478,10 +475,7 @@ contract Marketplace is
         }
 
         uint256 payPrice = offerPrice * fractionsToBuy;
-        uint256 fee = _baseAsset.getAssetInfo(mainId, subId).initialOwner !=
-            owner
-            ? _feeManager.getBuyingFee(mainId, subId)
-            : _feeManager.getInitialFee(mainId, subId);
+        uint256 fee = _feeManager.getBuyingFee(mainId, subId);
         fee = (payPrice * fee) / 1e4;
 
         if (fractionsToBuy > ownerBaseAssetBalance) {

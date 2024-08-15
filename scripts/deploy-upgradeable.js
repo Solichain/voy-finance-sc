@@ -63,26 +63,29 @@ async function main() {
   const WrapperFactory = await ethers.getContractFactory("WrappedAsset");
   const wrapperAsset = await WrapperFactory.deploy(await asset.getAddress());
   await wrapperAsset.waitForDeployment();
+  const baseAssetAddress = await asset.getAddress();
+  const wrapperAssetAddress = await wrapperAsset.getAddress();
+  const marketplaceAddress = await marketplace.getAddress();
 
   console.log({ wrappedAsset: await wrapperAsset.getAddress() });
 
-  await token.approve(marketplace.getAddress(), ethers.MaxUint256);
+  await token.approve(marketplaceAddress, ethers.MaxUint256);
 
-  await asset.grantRole(AssetManagerAccess, marketplace.getAddress());
+  await asset.grantRole(AssetManagerAccess, marketplaceAddress);
 
   // await asset.grantRole(AssetManagerAccess, invoiceAsset.getAddress());
 
   // await asset.grantRole(AssetManagerAccess, propertyAsset.getAddress());
 
-  await asset.grantRole(AssetManagerAccess, wrapperAsset.getAddress());
+  await asset.grantRole(AssetManagerAccess, wrapperAssetAddress);
 
-  // await invoiceAsset.grantRole(MarketplaceAccess, marketplace.getAddress());
+  // await invoiceAsset.grantRole(MarketplaceAccess, marketplaceAddress);
 
-  await asset.setApprovalForAll(marketplace.getAddress(), true);
+  await asset.setApprovalForAll(marketplaceAddress, true);
 
   // base asset confirmation
   await hre.run("verify:verify", {
-    address: asset.getAddress(),
+    address: baseAssetAddress,
     constructorArguments: [
       "VoyRealWorldAssets",
       "VRWA",
@@ -93,13 +96,13 @@ async function main() {
 
   // wrapped asset confirmation
   await hre.run("verify:verify", {
-    address: wrapperAsset.getAddress(),
-    constructorArguments: [asset.getAddress()],
+    address: wrapperAssetAddress,
+    constructorArguments: [baseAssetAddress],
   });
 
   // marketplace confirmation
   await hre.run("verify:verify", {
-    address: marketplace.getAddress(),
+    address: marketplaceAddress,
     constructorArguments: [],
   });
 }

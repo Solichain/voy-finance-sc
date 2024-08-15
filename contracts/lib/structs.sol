@@ -23,28 +23,11 @@ struct ListedAssetInfo {
  * @title storing wrapped main asset information
  * @param subIdInfo, mapping from the sub asset identifier to its info
  */
-struct WrappedMainAssetInfo {
+struct WrappedAssetInfo {
     address contractAddress;
-    WrappedSubAssetInfo[] subIdInfo;
-}
-
-/**
- * @title storing wrapped main asset information
- * @param fractions, number of fractions of asset
- * @param balance, balance of asset
- * @param contractAddress, asset contract address
- */
-struct WrappedSubAssetInfo {
-    uint256 fractions;
-    uint256 balance;
-}
-/**
- * @title storing asset information
- * @param initialOwner, is the initial owner of asset
- * @param purchaseDate, date that first time a fraction of asset is purchased
- */
-struct AssetInfo {
-    address initialOwner;
+    uint256[] subIds;
+    uint256[] fractions;
+    uint256[] balances;
 }
 
 struct BaseAssetIdentifiers {

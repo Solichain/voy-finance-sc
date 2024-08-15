@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import { WrappedMainAssetInfo, WrappedSubAssetInfo, IWrappedAsset, IERC20 } from "contracts/Asset/interface/IWrappedAsset.sol";
+import { WrappedAssetInfo, IWrappedAsset, IERC20 } from "contracts/Asset/interface/IWrappedAsset.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { IERC1155Receiver } from "@openzeppelin/contracts/interfaces/IERC1155Receiver.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/interfaces/IERC721Receiver.sol";
@@ -33,7 +33,9 @@ contract WrappedAsset is
 
     uint256 private immutable CHAIN_ID;
 
-    mapping(uint256 => WrappedMainAssetInfo) internal _wrappedInfo;
+    mapping(uint256 => WrappedAssetInfo) internal _wrappedInfo;
+
+    mapping(uint256 => mapping(uint256 => uint256)) internal _subidIndex;
 
     mapping(address => bool) private _isWhitelisted;
 
@@ -224,12 +226,12 @@ contract WrappedAsset is
      * @dev See {IWrappedAsset-unwrapERC721}.
      */
     function unwrapERC721(uint256 mainId, uint256 subId) external {
-        if (
-            _wrappedInfo[mainId].subIdInfo[subId].fractions !=
-            _baseAsset.subBalanceOf(_msgSender(), mainId, subId)
-        ) {
-            revert PartialOwnership();
-        }
+        // if (
+        //     _wrappedInfo[mainId].subIdInfo[subId].fractions !=
+        //     _baseAsset.subBalanceOf(_msgSender(), mainId, subId)
+        // ) {
+        //     revert PartialOwnership();
+        // }
         _unwrapERC721(_msgSender(), mainId, subId);
     }
 
@@ -253,8 +255,14 @@ contract WrappedAsset is
 
     function getWrappedInfo(
         uint256 wrappedMainId
-    ) external view returns (WrappedMainAssetInfo memory) {
+    ) external view returns (WrappedAssetInfo memory) {
         return _wrappedInfo[wrappedMainId];
+    }
+
+    function isWhitelistedContract(
+        address contractAddress
+    ) public view returns (bool) {
+        return _isWhitelisted[contractAddress];
     }
 
     function onERC1155Received(
@@ -312,14 +320,17 @@ contract WrappedAsset is
 
         mainId = getMainId(contractAddress);
 
-        WrappedMainAssetInfo storage wrappedErc20Info = _wrappedInfo[mainId];
+        WrappedAssetInfo storage wrappedErc20Info = _wrappedInfo[mainId];
 
         if (wrappedErc20Info.contractAddress == address(0)) {
             wrappedErc20Info.contractAddress = contractAddress;
+            wrappedErc20Info.subIds.push(0);
+            wrappedErc20Info.fractions.push(amount);
+            wrappedErc20Info.balances.push(amount);
+        } else {
+            wrappedErc20Info.fractions[0] += amount;
+            wrappedErc20Info.balances[0] += amount;
         }
-
-        wrappedErc20Info.subIdInfo[0].fractions += amount;
-        wrappedErc20Info.subIdInfo[0].balance += amount;
 
         token.safeTransferFrom(_msgSender(), address(this), amount);
 
@@ -355,18 +366,12 @@ contract WrappedAsset is
             revert AssetAlreadyCreated();
         }
 
-        WrappedMainAssetInfo storage wrappedErc721Info = _wrappedInfo[mainId];
+        WrappedAssetInfo storage wrappedErc721Info = _wrappedInfo[mainId];
 
-        if (wrappedErc721Info.contractAddress == address(0)) {
-            wrappedErc721Info.contractAddress = contractAddress;
-        }
-
-        WrappedSubAssetInfo memory newSubIdInfo = WrappedSubAssetInfo(
-            amount,
-            amount
-        );
-
-        wrappedErc721Info.subIdInfo[tokenId] = newSubIdInfo;
+        wrappedErc721Info.contractAddress = contractAddress;
+        wrappedErc721Info.subIds.push(tokenId);
+        wrappedErc721Info.fractions.push(amount);
+        wrappedErc721Info.balances.push(amount);
 
         token.safeTransferFrom(_msgSender(), address(this), tokenId, "");
 
@@ -403,14 +408,22 @@ contract WrappedAsset is
 
         mainId = getMainId(contractAddress);
 
-        WrappedMainAssetInfo storage wrappedErc1155Info = _wrappedInfo[mainId];
+        WrappedAssetInfo storage wrappedErc1155Info = _wrappedInfo[mainId];
 
-        if (wrappedErc1155Info.contractAddress == address(0)) {
+        if (
+            wrappedErc1155Info.contractAddress == address(0) ||
+            _subidIndex[mainId][tokenId] == 0
+        ) {
             wrappedErc1155Info.contractAddress = contractAddress;
+            wrappedErc1155Info.subIds.push(tokenId);
+            wrappedErc1155Info.fractions.push(amount);
+            wrappedErc1155Info.balances.push(amount);
+            _subidIndex[mainId][tokenId] = wrappedErc1155Info.subIds.length - 1;
+        } else {
+            uint256 subIdIndex = _subidIndex[mainId][tokenId];
+            wrappedErc1155Info.fractions[subIdIndex] += amount;
+            wrappedErc1155Info.balances[subIdIndex] += amount;
         }
-
-        wrappedErc1155Info.subIdInfo[tokenId].fractions += amount;
-        wrappedErc1155Info.subIdInfo[tokenId].balance += amount;
 
         token.safeTransferFrom(
             _msgSender(),
@@ -437,26 +450,26 @@ contract WrappedAsset is
         uint256 mainId,
         uint256 amount
     ) private {
-        WrappedMainAssetInfo storage wrappedErc20Info = _wrappedInfo[mainId];
-
-        if (wrappedErc20Info.subIdInfo[0].fractions == 0) {
-            revert WrongMainId();
-        }
-
-        if (wrappedErc20Info.contractAddress == address(0)) {
-            revert InvalidAddress();
-        }
-
-        IERC20 token = IERC20(wrappedErc20Info.contractAddress);
-
         uint256 actualBalance = _baseAsset.subBalanceOf(receiver, mainId, 0);
 
         if (actualBalance < amount) {
             revert NotEnoughBalance();
         }
 
-        wrappedErc20Info.subIdInfo[0].fractions -= amount;
-        wrappedErc20Info.subIdInfo[0].balance -= amount;
+        WrappedAssetInfo storage wrappedErc20Info = _wrappedInfo[mainId];
+
+        // if (wrappedErc20Info.subIdInfo[0].fractions == 0) {
+        //     revert WrongMainId();
+        // }
+
+        // if (wrappedErc20Info.contractAddress == address(0)) {
+        //     revert InvalidAddress();
+        // }
+
+        IERC20 token = IERC20(wrappedErc20Info.contractAddress);
+
+        wrappedErc20Info.fractions[0] -= amount;
+        wrappedErc20Info.balances[0] -= amount;
 
         _baseAsset.burnAsset(receiver, mainId, 0, amount);
 
@@ -475,14 +488,14 @@ contract WrappedAsset is
         uint256 mainId,
         uint256 subId
     ) private {
-        WrappedMainAssetInfo storage wrappedErc721Info = _wrappedInfo[mainId];
-
-        if (wrappedErc721Info.subIdInfo[subId].fractions == 0) {
-            revert WrongAssetId();
-        }
+        WrappedAssetInfo storage wrappedErc721Info = _wrappedInfo[mainId];
 
         if (wrappedErc721Info.contractAddress == address(0)) {
             revert InvalidAddress();
+        }
+
+        if (wrappedErc721Info.fractions[_subidIndex[mainId][subId]] == 0) {
+            revert WrongAssetId();
         }
 
         IERC721 token = IERC721(wrappedErc721Info.contractAddress);
@@ -512,16 +525,7 @@ contract WrappedAsset is
         uint256 subId,
         uint256 amount
     ) private {
-        WrappedMainAssetInfo storage wrappedErc1155Info = _wrappedInfo[mainId];
-        if (wrappedErc1155Info.subIdInfo[subId].fractions == 0) {
-            revert WrongAssetId();
-        }
-
-        if (wrappedErc1155Info.contractAddress == address(0)) {
-            revert InvalidAddress();
-        }
-
-        IERC1155 token = IERC1155(wrappedErc1155Info.contractAddress);
+        WrappedAssetInfo storage wrappedErc1155Info = _wrappedInfo[mainId];
 
         uint256 actualBalance = _baseAsset.subBalanceOf(
             receiver,
@@ -533,10 +537,13 @@ contract WrappedAsset is
             revert NotEnoughBalance();
         }
 
-        wrappedErc1155Info.subIdInfo[subId].fractions -= amount;
-        wrappedErc1155Info.subIdInfo[subId].balance -= amount;
+        uint256 subIdIndex = _subidIndex[mainId][subId];
+        wrappedErc1155Info.fractions[subIdIndex] -= amount;
+        wrappedErc1155Info.balances[subIdIndex] -= amount;
 
         _baseAsset.burnAsset(receiver, mainId, subId, amount);
+
+        IERC1155 token = IERC1155(wrappedErc1155Info.contractAddress);
 
         token.safeTransferFrom(address(this), receiver, subId, amount, "");
 

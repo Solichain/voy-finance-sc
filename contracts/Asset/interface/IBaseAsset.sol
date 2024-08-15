@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 import { IDLT } from "dual-layer-token/contracts/DLT/interfaces/IDLT.sol";
 import { IDLTEnumerable } from "dual-layer-token/contracts/DLT/interfaces/IDLTEnumerable.sol";
 import { IDLTPermit } from "dual-layer-token/contracts/DLT/interfaces/IDLTPermit.sol";
-import { AssetInfo, BaseAssetIdentifiers } from "contracts/lib/structs.sol";
+import { BaseAssetIdentifiers } from "contracts/lib/structs.sol";
 
 interface IBaseAsset is IDLT, IDLTEnumerable, IDLTPermit {
     /**
@@ -89,17 +89,6 @@ interface IBaseAsset is IDLT, IDLTEnumerable, IDLTPermit {
         uint256 mainId,
         uint256 subId
     ) external view returns (string memory);
-
-    /**
-     * @dev get the asset info
-     * @param mainId, unique identifier of asset type
-     * @param subId, unique identifier of asset
-     * @return AssetInfo, struct of the asset info
-     */
-    function getAssetInfo(
-        uint256 mainId,
-        uint256 subId
-    ) external view returns (AssetInfo memory);
 
     /**
      * @dev Gets the shareholders of asset sub id

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import { WrappedMainAssetInfo, WrappedSubAssetInfo, IERC20 } from "contracts/lib/structs.sol";
+import { WrappedAssetInfo, IERC20 } from "contracts/lib/structs.sol";
 import { GenericErrors } from "contracts/lib/errors.sol";
 
 interface IWrappedAsset is GenericErrors {
@@ -266,5 +266,5 @@ interface IWrappedAsset is GenericErrors {
      */
     function getWrappedInfo(
         uint256 wrappedMainId
-    ) external view returns (WrappedMainAssetInfo memory);
+    ) external view returns (WrappedAssetInfo memory);
 }

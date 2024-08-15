@@ -3,7 +3,8 @@ pragma solidity 0.8.17;
 
 import { DLTEnumerable } from "dual-layer-token/contracts/DLT/extensions/DLTEnumerable.sol";
 import { DLTPermit } from "dual-layer-token/contracts/DLT/extensions/DLTPermit.sol";
-import { AssetInfo, IBaseAsset, BaseAssetIdentifiers } from "contracts/Asset/interface/IBaseAsset.sol";
+import { IBaseAsset, BaseAssetIdentifiers } from "contracts/Asset/interface/IBaseAsset.sol";
+// import { IBaseAsset } from "contracts/Asset/interface/IBaseAsset.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
@@ -16,7 +17,6 @@ import { DLT } from "dual-layer-token/contracts/DLT/DLT.sol";
  * @dev Manages creation of asset and rewards distribution
  */
 contract BaseAsset is
-    Context,
     ERC165,
     DLT,
     DLTEnumerable,
@@ -28,14 +28,9 @@ contract BaseAsset is
     bytes32 public constant ASSET_MANAGER =
         0x9c6e3ae929b539a99db03120eac7d9f862d68479b44f1eec05ab6036fcf56830;
 
-    mapping(uint256 => mapping(uint256 => AssetInfo)) private _baseAssetInfo;
     mapping(uint256 => string) private _baseAssetURI;
     mapping(address => BaseAssetIdentifiers[]) private _ownerAssets;
-    mapping(uint256 => mapping(uint256 => mapping(address => uint256)))
-        private _ownerAssetIndex;
     mapping(uint256 => mapping(uint256 => address[])) private _shareholders;
-    mapping(uint256 => mapping(uint256 => mapping(address => uint256)))
-        private _shareholdersIndex;
 
     constructor(
         string memory name,
@@ -56,25 +51,11 @@ contract BaseAsset is
         uint256 subId,
         uint256 amount
     ) external onlyRole(ASSET_MANAGER) {
-        _mint(owner, mainId, subId, amount);
-        uint256 assetIndex = _ownerAssetIndex[mainId][subId][owner];
-        _baseAssetInfo[mainId][subId].initialOwner = owner;
-
-        if (_ownerAssets[owner][assetIndex].mainId == 0) {
+        if (subBalanceOf(owner, mainId, subId) == 0) {
             _ownerAssets[owner].push(BaseAssetIdentifiers(mainId, subId));
-            _ownerAssetIndex[mainId][subId][owner] =
-                _ownerAssets[owner].length -
-                1;
             _shareholders[mainId][subId].push(owner);
-        } else if (
-            _shareholdersIndex[mainId][subId][owner] == 0 &&
-            _shareholders[mainId][subId][0] != owner
-        ) {
-            _shareholders[mainId][subId].push(owner);
-            _shareholdersIndex[mainId][subId][owner] =
-                _shareholders[mainId][subId].length -
-                1;
         }
+        _mint(owner, mainId, subId, amount);
 
         emit AssetCreated(owner, mainId, subId, amount);
     }
@@ -89,19 +70,32 @@ contract BaseAsset is
         uint256 amount
     ) external onlyRole(ASSET_MANAGER) {
         _burn(owner, mainId, subId, amount);
-        uint256 ownerIndex = _shareholdersIndex[mainId][subId][owner];
+        // if (
+        //     subBalanceOf(owner, mainId, subId) == 0 &&
+        //     subBalanceOf(address(this), mainId, subId) == 0
+        // ) {
+        //     for (uint256 i = 0; i < _ownerAssets[owner].length - 1; i++) {
+        //         if (
+        //             _ownerAssets[owner][i].mainId == mainId &&
+        //             _ownerAssets[owner][i].subId == subId
+        //         ) {
+        //             _ownerAssets[owner][i].mainId = 0;
+        //             _ownerAssets[owner][i].subId = 0;
+        //             break;
+        //         }
+        //     }
+        //     for (
+        //         uint256 i = 0;
+        //         i < _shareholders[mainId][subId].length - 1;
+        //         i++
+        //     ) {
+        //         if (_shareholders[mainId][subId][i] == owner) {
+        //             _shareholders[mainId][subId][i] = address(0);
+        //             break;
+        //         }
+        //     }
+        // }
 
-        _shareholders[mainId][subId][ownerIndex] = _shareholders[mainId][subId][
-            _shareholders[mainId][subId].length - 1
-        ];
-
-        _shareholders[mainId][subId].pop();
-
-        _shareholdersIndex[mainId][subId][owner] = 0;
-
-        _shareholdersIndex[mainId][subId][
-            _shareholders[mainId][subId][ownerIndex]
-        ] = ownerIndex;
         emit AssetBurnt(owner, mainId, subId, amount);
     }
 
@@ -124,13 +118,6 @@ contract BaseAsset is
     ) external view returns (string memory) {
         string memory stringAssetSubId = Strings.toString(subId);
         return string.concat(_baseAssetURI[mainId], stringAssetSubId);
-    }
-
-    function getAssetInfo(
-        uint256 mainId,
-        uint256 subId
-    ) external view returns (AssetInfo memory) {
-        return _baseAssetInfo[mainId][subId];
     }
 
     /**

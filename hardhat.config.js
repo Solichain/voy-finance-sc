@@ -4,12 +4,17 @@ require("hardhat-contract-sizer");
 require("dotenv").config();
 
 const {
-  // TESTNET_PRIVATE_KEY,
   MAINNET_DEPLOYER_PRIVATE_KEY,
-  // MAINNET_ARCHIVAL_RPC,
-  // MUMBAI_ARCHIVAL_RPC,
+  TESTNET_PRIVATE_KEY,
   POLYGON_ARCHIVAL_RPC,
-  // SEPOLIA_ARCHIVAL_RPC,
+  // POLYGON_SCAN_API_KEY,
+  // POLYGON_RPC_URL,
+  // POLYGON_CHAIN_ID,
+  AMOY_ARCHIVAL_RPC,
+  // AMOY_SCAN_API_KEY,
+  // AMOY_RPC_URL,
+  // AMOY_CHAIN_ID,
+  SEPOLIA_ARCHIVAL_RPC,
 } = process.env;
 
 /** @type import('hardhat/config').HardhatUserConfig */
@@ -35,53 +40,53 @@ module.exports = {
     // },
   },
   networks: {
-    hardhat: {
-      forking: {
-        url: process.env.RPC_URL || "https://www.ankr.com/rpc/polygon/",
-        ignoreUnknownTxType: true,
-        // blockNumber: 18314577,
-      },
-      chainId: Number(process.env.CHAIN_ID) || 137,
-      accounts: {
-        privateKey:
-          "fb2f8928200363aba316b62595b35133a4b98acdb82e58570fba1f93a461d456",
-        balance: 2,
-        // mnemonic:
-        //   "dice shove sheriff police boss indoor hospital vivid tenant method game matter",
-        // path: "m/44'/60'/0'/0",
-        // initialIndex: 0,
-      },
-      initialBaseFeePerGas: 0,
-      gasPrice: 0,
-      gas: 30000000,
-    },
-    // mumbai: {
-    //   url: `${MUMBAI_ARCHIVAL_RPC}`,
+    // hardhat: {
+    //   forking: {
+    //     url: process.env.POLYGON_RPC_URL || "https://www.ankr.com/rpc/polygon/",
+    //     ignoreUnknownTxType: true,
+    //     // blockNumber: 18314577,
+    //   },
+    //   chainId: Number(process.env.POLYGON_CHAIN_ID) || 137,
+    //   accounts: {
+    //     privateKey:
+    //       "fb2f8928200363aba316b62595b35133a4b98acdb82e58570fba1f93a461d456",
+    //     balance: 2,
+    //     // mnemonic:
+    //     //   "dice shove sheriff police boss indoor hospital vivid tenant method game matter",
+    //     // path: "m/44'/60'/0'/0",
+    //     // initialIndex: 0,
+    //   },
+    //   initialBaseFeePerGas: 0,
+    //   gasPrice: 0,
+    //   gas: 30000000,
+    // },
+    // polygon: {
+    //   url: `${POLYGON_ARCHIVAL_RPC}`,
     //   accounts: [
     //     `${
-    //       TESTNET_PRIVATE_KEY ||
+    //       MAINNET_DEPLOYER_PRIVATE_KEY ||
     //       "0x0000000000000000000000000000000000000000000000000000000000000000"
     //     }`,
     //   ],
     // },
-    polygon: {
-      url: `${POLYGON_ARCHIVAL_RPC}`,
+    // amoy: {
+    //   url: `${AMOY_ARCHIVAL_RPC}`,
+    //   accounts: [
+    //     `${
+    //       MAINNET_DEPLOYER_PRIVATE_KEY ||
+    //       "0x0000000000000000000000000000000000000000000000000000000000000000"
+    //     }`,
+    //   ],
+    // },
+    sepolia: {
+      url: `${SEPOLIA_ARCHIVAL_RPC}`,
       accounts: [
         `${
-          MAINNET_DEPLOYER_PRIVATE_KEY ||
+          TESTNET_PRIVATE_KEY ||
           "0x0000000000000000000000000000000000000000000000000000000000000000"
         }`,
       ],
     },
-    // sepolia: {
-    //   url: `${SEPOLIA_ARCHIVAL_RPC}`,
-    //   accounts: [
-    //     `${
-    //       TESTNET_PRIVATE_KEY ||
-    //       "0x0000000000000000000000000000000000000000000000000000000000000000"
-    //     }`,
-    //   ],
-    // },
     // mainnet: {
     //   url: `${MAINNET_ARCHIVAL_RPC}`,
     //   accounts: [
@@ -103,8 +108,8 @@ module.exports = {
   etherscan: {
     apiKey: {
       // mainnet: process.env.ETHERSCAN_API_KEY || "",
-      // sepolia: process.env.ETHERSCAN_API_KEY || "",
-      polygon: process.env.POLYGONSCAN_API_KEY || "",
+      sepolia: process.env.SEPOLIA_SCAN_API_KEY || "",
+      // polygon: process.env.POLYGONSCAN_API_KEY || "",
       // mumbai: process.env.POLYGONSCAN_API_KEY || "",
     },
   },
