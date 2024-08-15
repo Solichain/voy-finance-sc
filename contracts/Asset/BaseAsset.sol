@@ -4,7 +4,6 @@ pragma solidity 0.8.17;
 import { DLTEnumerable } from "dual-layer-token/contracts/DLT/extensions/DLTEnumerable.sol";
 import { DLTPermit } from "dual-layer-token/contracts/DLT/extensions/DLTPermit.sol";
 import { IBaseAsset, BaseAssetIdentifiers } from "contracts/Asset/interface/IBaseAsset.sol";
-// import { IBaseAsset } from "contracts/Asset/interface/IBaseAsset.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
@@ -51,10 +50,7 @@ contract BaseAsset is
         uint256 subId,
         uint256 amount
     ) external onlyRole(ASSET_MANAGER) {
-        if (subBalanceOf(owner, mainId, subId) == 0) {
-            _ownerAssets[owner].push(BaseAssetIdentifiers(mainId, subId));
-            _shareholders[mainId][subId].push(owner);
-        }
+        addShareholder(owner, mainId, subId);
         _mint(owner, mainId, subId, amount);
 
         emit AssetCreated(owner, mainId, subId, amount);
@@ -70,31 +66,6 @@ contract BaseAsset is
         uint256 amount
     ) external onlyRole(ASSET_MANAGER) {
         _burn(owner, mainId, subId, amount);
-        // if (
-        //     subBalanceOf(owner, mainId, subId) == 0 &&
-        //     subBalanceOf(address(this), mainId, subId) == 0
-        // ) {
-        //     for (uint256 i = 0; i < _ownerAssets[owner].length - 1; i++) {
-        //         if (
-        //             _ownerAssets[owner][i].mainId == mainId &&
-        //             _ownerAssets[owner][i].subId == subId
-        //         ) {
-        //             _ownerAssets[owner][i].mainId = 0;
-        //             _ownerAssets[owner][i].subId = 0;
-        //             break;
-        //         }
-        //     }
-        //     for (
-        //         uint256 i = 0;
-        //         i < _shareholders[mainId][subId].length - 1;
-        //         i++
-        //     ) {
-        //         if (_shareholders[mainId][subId][i] == owner) {
-        //             _shareholders[mainId][subId][i] = address(0);
-        //             break;
-        //         }
-        //     }
-        // }
 
         emit AssetBurnt(owner, mainId, subId, amount);
     }
@@ -102,10 +73,7 @@ contract BaseAsset is
     /**
      * @dev See {IBaseAsset-setBaseURI}.
      */
-    function setBaseURI(
-        uint256 mainId,
-        string calldata newBaseURI
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setBaseURI(uint256 mainId, string calldata newBaseURI) external {
         _setBaseURI(mainId, newBaseURI);
     }
 
@@ -142,6 +110,28 @@ contract BaseAsset is
         uint256 subId
     ) public view virtual returns (address[] memory) {
         return _shareholders[mainId][subId];
+    }
+
+    function addShareholder(
+        address newOwner,
+        uint256 mainId,
+        uint256 subId
+    ) public {
+        if (subBalanceOf(newOwner, mainId, subId) == 0) {
+            _ownerAssets[newOwner].push(BaseAssetIdentifiers(mainId, subId));
+            _shareholders[mainId][subId].push(newOwner);
+        }
+    }
+
+    function deleteShareholderInfo(
+        address owner,
+        uint256 mainId,
+        uint256 subId,
+        uint256 ownerIndex,
+        uint256 assetIndex
+    ) public override {
+        delete _shareholders[mainId][subId][ownerIndex];
+        delete _ownerAssets[owner][assetIndex];
     }
 
     function safeTransferFrom(

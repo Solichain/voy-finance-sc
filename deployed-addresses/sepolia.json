@@ -9,23 +9,9 @@
     "MockERC20": "0x8d7B4d4b876DFD8AE031f13978890119cF0DA9b1"
   },
 
-  { "baseAsset": "0xc481eE40AdFf9c3504CD0c39051c69045b796899" },
+  { "baseAsset": "0xb4DE2c3157d6CfE8E3D7CE3791C383f3FF99a5Aa" },
   { "mockedErc20token": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359" },
-  { "feeManager": "0x9DE54c9ff194cb706b305c5cc4cEd0Ba352cFaeE" },
-  { "marketplace": "0xD02E2e607434449BC7757Cf79a6D87c1c743574a" },
-  { "wrappedAsset": "0x12cB3e62382bfc1f506815d27a765BD9bbCea6B2" }
+  { "feeManager": "0x5A857CC12d4E0F5e71FEC5Ebf9e9B7B7489e7F69" },
+  { "marketplace": "0x66924C76A3172E4888fEA5E2C812FAa135B2897A" },
+  { "wrappedAsset": "0xA9d9f691b62c33A5486D1C693f959563d0aBBE46" }
 ]
-
-{ baseAsset: '0xeD2c5E34Cd4959181FBCc9C01b4a2B5E2b47D0eF' }
-{ mockedErc20token: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359' }
-{ feeManager: '0x2fbe3e895Bd7D118934487397d037FDBdE4B76FE' }
-{ marketplace: '0x9aB683F0fd8934b808b1707dD0Fe91Ef57e3e96c' }
-{ wrappedAsset: '0x35C6EE689521097d1FD2f5Fc5c1c6E096b33618E' }
-
-
-//without new structs
-{ baseAsset: '0xde72ae36A9EDCc1C8a77B721F7c036C6c0872f5d' }
-{ mockedErc20token: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359' }
-{ feeManager: '0xDcEAae5F1d2182a3c5E27BdF43dd84311E8970dd' }
-{ marketplace: '0xaeb7E11E97c4E0018D5e5ee204bA63c1F6f0E93c' }
-{ wrappedAsset: '0x1483cD83c835E1CaC0c406ceBDf7Ba70effC3d76' }

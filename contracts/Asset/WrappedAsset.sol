@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import { WrappedAssetInfo, IWrappedAsset, IERC20 } from "contracts/Asset/interface/IWrappedAsset.sol";
+import { WrappedAssetInfo, IWrappedAsset, BaseAssetIdentifiers, IERC20 } from "contracts/Asset/interface/IWrappedAsset.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { IERC1155Receiver } from "@openzeppelin/contracts/interfaces/IERC1155Receiver.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/interfaces/IERC721Receiver.sol";
@@ -226,12 +226,12 @@ contract WrappedAsset is
      * @dev See {IWrappedAsset-unwrapERC721}.
      */
     function unwrapERC721(uint256 mainId, uint256 subId) external {
-        // if (
-        //     _wrappedInfo[mainId].subIdInfo[subId].fractions !=
-        //     _baseAsset.subBalanceOf(_msgSender(), mainId, subId)
-        // ) {
-        //     revert PartialOwnership();
-        // }
+        if (
+            _wrappedInfo[mainId].fractions[_subidIndex[mainId][subId]] !=
+            _baseAsset.subBalanceOf(_msgSender(), mainId, subId)
+        ) {
+            revert PartialOwnership();
+        }
         _unwrapERC721(_msgSender(), mainId, subId);
     }
 
@@ -458,14 +458,6 @@ contract WrappedAsset is
 
         WrappedAssetInfo storage wrappedErc20Info = _wrappedInfo[mainId];
 
-        // if (wrappedErc20Info.subIdInfo[0].fractions == 0) {
-        //     revert WrongMainId();
-        // }
-
-        // if (wrappedErc20Info.contractAddress == address(0)) {
-        //     revert InvalidAddress();
-        // }
-
         IERC20 token = IERC20(wrappedErc20Info.contractAddress);
 
         wrappedErc20Info.fractions[0] -= amount;
@@ -474,7 +466,7 @@ contract WrappedAsset is
         _baseAsset.burnAsset(receiver, mainId, 0, amount);
 
         token.safeTransfer(receiver, amount);
-
+        updateBaseAssetInfo(_msgSender(), mainId, 0);
         emit ERC20Unwrapped(
             receiver,
             wrappedErc20Info.contractAddress,
@@ -508,7 +500,7 @@ contract WrappedAsset is
         );
 
         token.safeTransferFrom(address(this), receiver, subId, "");
-
+        updateBaseAssetInfo(_msgSender(), mainId, subId);
         emit ERC721Unwrapped(
             receiver,
             wrappedErc721Info.contractAddress,
@@ -547,6 +539,8 @@ contract WrappedAsset is
 
         token.safeTransferFrom(address(this), receiver, subId, amount, "");
 
+        updateBaseAssetInfo(_msgSender(), mainId, subId);
+
         emit ERC1155Unwrapped(
             receiver,
             wrappedErc1155Info.contractAddress,
@@ -554,5 +548,48 @@ contract WrappedAsset is
             subId,
             amount
         );
+    }
+
+    function updateBaseAssetInfo(
+        address owner,
+        uint256 mainId,
+        uint256 subId
+    ) public {
+        BaseAssetIdentifiers[] memory ownerAssets = _baseAsset.getOwnerAssets(
+            owner
+        );
+        address[] memory shareholders = _baseAsset.getShareholdersInfo(
+            mainId,
+            subId
+        );
+
+        if (_baseAsset.subBalanceOf(owner, mainId, subId) == 0) {
+            uint256 assetIndex;
+            uint256 ownerIndex;
+
+            for (uint256 i = 0; i < ownerAssets.length; i++) {
+                if (
+                    ownerAssets[i].mainId == mainId &&
+                    ownerAssets[i].subId == subId
+                ) {
+                    assetIndex = i;
+
+                    break;
+                }
+            }
+            for (uint256 i = 0; i < shareholders.length; i++) {
+                if (shareholders[i] == owner) {
+                    ownerIndex = i;
+                    break;
+                }
+            }
+            _baseAsset.deleteShareholderInfo(
+                owner,
+                mainId,
+                subId,
+                ownerIndex,
+                assetIndex
+            );
+        }
     }
 }

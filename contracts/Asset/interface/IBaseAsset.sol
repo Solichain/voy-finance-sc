@@ -98,4 +98,29 @@ interface IBaseAsset is IDLT, IDLTEnumerable, IDLTPermit {
     function getOwnerAssets(
         address owner
     ) external view returns (BaseAssetIdentifiers[] memory);
+
+    /**
+     * @dev Gets the shareholders of asset sub id
+     * @param mainId, unique identifier of asset type
+     * @param subId, unique identifier of asset
+     * @return BaseAssetIdentifiers[], Addresses array of the shareholders
+     */
+    function getShareholdersInfo(
+        uint256 mainId,
+        uint256 subId
+    ) external view returns (address[] memory);
+
+    function addShareholder(
+        address newOwner,
+        uint256 mainId,
+        uint256 subId
+    ) external;
+
+    function deleteShareholderInfo(
+        address owner,
+        uint256 mainId,
+        uint256 subId,
+        uint256 ownerIndex,
+        uint256 ownerAssetIndex
+    ) external;
 }

@@ -66,6 +66,7 @@ async function main() {
   const baseAssetAddress = await asset.getAddress();
   const wrapperAssetAddress = await wrapperAsset.getAddress();
   const marketplaceAddress = await marketplace.getAddress();
+  const feeManagerAddress = await feeManager.getAddress();
 
   console.log({ wrappedAsset: await wrapperAsset.getAddress() });
 
@@ -104,6 +105,12 @@ async function main() {
   await hre.run("verify:verify", {
     address: marketplaceAddress,
     constructorArguments: [],
+  });
+
+  // Fee Manager confirmation
+  await hre.run("verify:verify", {
+    address: feeManagerAddress,
+    constructorArguments: [100, 200, feeWallet],
   });
 }
 

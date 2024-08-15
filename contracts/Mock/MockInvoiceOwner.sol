@@ -12,8 +12,6 @@ contract MockInvoiceOwner {
 
     function list(uint256 mainId) external {
         ListedAssetInfo memory _listedInfo = ListedAssetInfo(
-            mainId,
-            0,
             1,
             1000,
             1,

@@ -11,10 +11,11 @@ const {
   // POLYGON_RPC_URL,
   // POLYGON_CHAIN_ID,
   AMOY_ARCHIVAL_RPC,
-  // AMOY_SCAN_API_KEY,
+  AMOY_SCAN_API_KEY,
   // AMOY_RPC_URL,
   // AMOY_CHAIN_ID,
   SEPOLIA_ARCHIVAL_RPC,
+  SEPOLIA_SCAN_API_KEY,
 } = process.env;
 
 /** @type import('hardhat/config').HardhatUserConfig */
@@ -60,24 +61,25 @@ module.exports = {
     //   gasPrice: 0,
     //   gas: 30000000,
     // },
-    // polygon: {
-    //   url: `${POLYGON_ARCHIVAL_RPC}`,
-    //   accounts: [
-    //     `${
-    //       MAINNET_DEPLOYER_PRIVATE_KEY ||
-    //       "0x0000000000000000000000000000000000000000000000000000000000000000"
-    //     }`,
-    //   ],
-    // },
-    // amoy: {
-    //   url: `${AMOY_ARCHIVAL_RPC}`,
-    //   accounts: [
-    //     `${
-    //       MAINNET_DEPLOYER_PRIVATE_KEY ||
-    //       "0x0000000000000000000000000000000000000000000000000000000000000000"
-    //     }`,
-    //   ],
-    // },
+    polygon: {
+      url: `${POLYGON_ARCHIVAL_RPC}`,
+      accounts: [
+        `${
+          MAINNET_DEPLOYER_PRIVATE_KEY ||
+          "0x0000000000000000000000000000000000000000000000000000000000000000"
+        }`,
+      ],
+    },
+    amoy: {
+      url: `${AMOY_ARCHIVAL_RPC}`,
+      chainId: 80002,
+      accounts: [
+        `${
+          MAINNET_DEPLOYER_PRIVATE_KEY ||
+          "0x0000000000000000000000000000000000000000000000000000000000000000"
+        }`,
+      ],
+    },
     sepolia: {
       url: `${SEPOLIA_ARCHIVAL_RPC}`,
       accounts: [
@@ -108,9 +110,9 @@ module.exports = {
   etherscan: {
     apiKey: {
       // mainnet: process.env.ETHERSCAN_API_KEY || "",
-      sepolia: process.env.SEPOLIA_SCAN_API_KEY || "",
-      // polygon: process.env.POLYGONSCAN_API_KEY || "",
-      // mumbai: process.env.POLYGONSCAN_API_KEY || "",
+      sepolia: SEPOLIA_SCAN_API_KEY,
+      amoy: AMOY_SCAN_API_KEY,
+      polygon: process.env.POLYGON_SCAN_API_KEY || "",
     },
   },
 };

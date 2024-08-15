@@ -3,7 +3,7 @@ pragma solidity 0.8.17;
 
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
-import { ListedAssetInfo, IMarketplace, IERC20 } from "contracts/Marketplace/interface/IMarketplace.sol";
+import { ListedAssetInfo, BaseAssetIdentifiers, IMarketplace, IERC20 } from "contracts/Marketplace/interface/IMarketplace.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -14,7 +14,6 @@ import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { IBaseAsset } from "contracts/Asset/interface/IBaseAsset.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 import { Counters } from "contracts/lib/Counters.sol";
-import { WrappedAsset } from "contracts/Asset/WrappedAsset.sol";
 
 /**
  * @title The common marketplace for the all types of ERC-6960 assets
@@ -315,32 +314,38 @@ contract Marketplace is
             subId
         );
 
-        uint listedBalnce = _listedAssetInfo[mainId][subId][_msgSender()]
-            .listedFractions;
-
-        if (baseAssetBalance + listedBalnce < listedAssetInfo.listedFractions) {
+        if (baseAssetBalance < listedAssetInfo.listedFractions) {
             revert NotEnoughBalance();
         }
 
-        if (listedAssetInfo.listedFractions < listedBalnce) {
-            _baseAsset.safeTransferFrom(
-                address(this),
-                _msgSender(),
-                mainId,
-                subId,
-                listedBalnce - listedAssetInfo.listedFractions,
-                ""
-            );
-        } else if (listedAssetInfo.listedFractions > listedBalnce) {
-            _baseAsset.safeTransferFrom(
-                _msgSender(),
-                address(this),
-                mainId,
-                subId,
-                listedAssetInfo.listedFractions - listedBalnce,
-                ""
-            );
-        }
+        // uint listedBalance = _listedAssetInfo[mainId][subId][_msgSender()]
+        //     .listedFractions;
+
+        // if (
+        //     baseAssetBalance + listedBalance < listedAssetInfo.listedFractions
+        // ) {
+        //     revert NotEnoughBalance();
+        // }
+
+        // if (listedAssetInfo.listedFractions < listedBalance) {
+        //     _baseAsset.safeTransferFrom(
+        //         address(this),
+        //         _msgSender(),
+        //         mainId,
+        //         subId,
+        //         listedBalance - listedAssetInfo.listedFractions,
+        //         ""
+        //     );
+        // } else if (listedAssetInfo.listedFractions > listedBalance) {
+        //     _baseAsset.safeTransferFrom(
+        //         _msgSender(),
+        //         address(this),
+        //         mainId,
+        //         subId,
+        //         listedAssetInfo.listedFractions - listedBalance,
+        //         ""
+        //     );
+        // }
 
         _listedAssetInfo[mainId][subId][_msgSender()] = listedAssetInfo;
 
@@ -359,18 +364,18 @@ contract Marketplace is
             revert AlreadyUnlisted();
         }
 
-        uint listedBalnce = _listedAssetInfo[mainId][subId][_msgSender()]
-            .listedFractions;
-        delete _listedAssetInfo[mainId][subId][_msgSender()];
+        // uint listedBalnce = _listedAssetInfo[mainId][subId][_msgSender()]
+        //     .listedFractions;
 
-        _baseAsset.safeTransferFrom(
-            address(this),
-            _msgSender(),
-            mainId,
-            subId,
-            listedBalnce,
-            ""
-        );
+        // _baseAsset.safeTransferFrom(
+        //     address(this),
+        //     _msgSender(),
+        //     mainId,
+        //     subId,
+        //     listedBalnce,
+        //     ""
+        // );
+        delete _listedAssetInfo[mainId][subId][_msgSender()];
 
         emit AssetUnlisted(_msgSender(), mainId, subId);
     }
@@ -405,22 +410,22 @@ contract Marketplace is
             revert NotEnoughBalance();
         }
 
-        address receiver = owner;
         uint256 payPrice = listedAssetInfo.fractionPriceInToken *
             fractionsToBuy;
         uint256 fee = _feeManager.getBuyingFee(mainId, subId);
         fee = (payPrice * fee) / 1e4;
 
         if (listedFractions == fractionsToBuy) {
-            delete _listedAssetInfo[mainId][subId][_msgSender()];
+            delete _listedAssetInfo[mainId][subId][owner];
         } else {
             _listedAssetInfo[mainId][subId][owner].listedFractions =
                 listedFractions -
                 fractionsToBuy;
         }
+        _baseAsset.addShareholder(_msgSender(), mainId, subId);
 
         _baseAsset.safeTransferFrom(
-            address(this),
+            owner,
             _msgSender(),
             mainId,
             subId,
@@ -428,11 +433,18 @@ contract Marketplace is
             ""
         );
 
-        listedAssetInfo.token.safeTransferFrom(
-            _msgSender(),
-            receiver,
-            payPrice
-        );
+        updateBaseAssetInfo(owner, mainId, subId);
+
+        // _baseAsset.safeTransferFrom(
+        //     address(this),
+        //     _msgSender(),
+        //     mainId,
+        //     subId,
+        //     fractionsToBuy,
+        //     ""
+        // );
+
+        listedAssetInfo.token.safeTransferFrom(_msgSender(), owner, payPrice);
 
         listedAssetInfo.token.safeTransferFrom(
             _msgSender(),
@@ -461,8 +473,8 @@ contract Marketplace is
         address buyer,
         address token
     ) private {
-        uint256 listedBalnce = _listedAssetInfo[mainId][subId][_msgSender()]
-            .listedFractions;
+        // uint256 listedBalnce = _listedAssetInfo[mainId][subId][_msgSender()]
+        //     .listedFractions;
 
         uint256 ownerBaseAssetBalance = _baseAsset.subBalanceOf(
             owner,
@@ -470,27 +482,22 @@ contract Marketplace is
             subId
         );
 
-        if (fractionsToBuy > ownerBaseAssetBalance + listedBalnce) {
+        if (fractionsToBuy > ownerBaseAssetBalance) {
             revert NotEnoughBalance();
         }
+        // if (fractionsToBuy > ownerBaseAssetBalance + listedBalnce) {
+        //     revert NotEnoughBalance();
+        // }
 
         uint256 payPrice = offerPrice * fractionsToBuy;
         uint256 fee = _feeManager.getBuyingFee(mainId, subId);
         fee = (payPrice * fee) / 1e4;
 
-        if (fractionsToBuy > ownerBaseAssetBalance) {
-            _baseAsset.safeTransferFrom(
-                address(this),
-                owner,
-                mainId,
-                subId,
-                fractionsToBuy - ownerBaseAssetBalance,
-                ""
-            );
-
+        if (fractionsToBuy == ownerBaseAssetBalance) {
             delete _listedAssetInfo[mainId][subId][_msgSender()];
         }
 
+        _baseAsset.addShareholder(buyer, mainId, subId);
         _baseAsset.safeTransferFrom(
             owner,
             buyer,
@@ -499,6 +506,21 @@ contract Marketplace is
             fractionsToBuy,
             ""
         );
+
+        updateBaseAssetInfo(owner, mainId, subId);
+
+        // if (fractionsToBuy > ownerBaseAssetBalance) {
+        //     _baseAsset.safeTransferFrom(
+        //         address(this),
+        //         owner,
+        //         mainId,
+        //         subId,
+        //         fractionsToBuy - ownerBaseAssetBalance,
+        //         ""
+        //     );
+
+        //     delete _listedAssetInfo[mainId][subId][_msgSender()];
+        // }
 
         IERC20(token).safeTransferFrom(buyer, owner, payPrice);
         IERC20(token).safeTransferFrom(buyer, _feeManager.getFeeWallet(), fee);
@@ -527,5 +549,48 @@ contract Marketplace is
 
         emit FeeManagerSet(address(_feeManager), newFeeManager);
         _feeManager = IFeeManager(newFeeManager);
+    }
+
+    function updateBaseAssetInfo(
+        address owner,
+        uint256 mainId,
+        uint256 subId
+    ) internal {
+        BaseAssetIdentifiers[] memory ownerAssets = _baseAsset.getOwnerAssets(
+            owner
+        );
+        address[] memory shareholders = _baseAsset.getShareholdersInfo(
+            mainId,
+            subId
+        );
+
+        if (_baseAsset.subBalanceOf(owner, mainId, subId) == 0) {
+            uint256 assetIndex;
+            uint256 ownerIndex;
+
+            for (uint256 i = 0; i < ownerAssets.length; i++) {
+                if (
+                    ownerAssets[i].mainId == mainId &&
+                    ownerAssets[i].subId == subId
+                ) {
+                    assetIndex = i;
+
+                    break;
+                }
+            }
+            for (uint256 i = 0; i < shareholders.length; i++) {
+                if (shareholders[i] == owner) {
+                    ownerIndex = i;
+                    break;
+                }
+            }
+            _baseAsset.deleteShareholderInfo(
+                owner,
+                mainId,
+                subId,
+                ownerIndex,
+                assetIndex
+            );
+        }
     }
 }

@@ -11,8 +11,6 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @param token, address of token to receive salePrice
  */
 struct ListedAssetInfo {
-    uint256 mainId;
-    uint256 subId;
     uint256 fractionPriceInToken; // for each fraction (use it with minimum decimal)
     uint256 listedFractions;
     uint256 minFraction;
