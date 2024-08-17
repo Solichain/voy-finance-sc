@@ -88,30 +88,6 @@ contract BaseAsset is
         return string.concat(_baseAssetURI[mainId], stringAssetSubId);
     }
 
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(ERC165, AccessControl) returns (bool) {
-        return
-            interfaceId == type(IBaseAsset).interfaceId ||
-            super.supportsInterface(interfaceId);
-    }
-
-    function getOwnerAssets(
-        address owner
-    ) public view virtual returns (BaseAssetIdentifiers[] memory) {
-        return _ownerAssets[owner];
-    }
-
-    function getShareholdersInfo(
-        uint256 mainId,
-        uint256 subId
-    ) public view virtual returns (address[] memory) {
-        return _shareholders[mainId][subId];
-    }
-
     function addShareholder(
         address newOwner,
         uint256 mainId,
@@ -144,6 +120,30 @@ contract BaseAsset is
         super.safeTransferFrom(sender, recipient, mainId, subId, amount, "");
 
         return true;
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(ERC165, AccessControl) returns (bool) {
+        return
+            interfaceId == type(IBaseAsset).interfaceId ||
+            super.supportsInterface(interfaceId);
+    }
+
+    function getOwnerAssets(
+        address owner
+    ) public view virtual returns (BaseAssetIdentifiers[] memory) {
+        return _ownerAssets[owner];
+    }
+
+    function getShareholdersInfo(
+        uint256 mainId,
+        uint256 subId
+    ) public view virtual returns (address[] memory) {
+        return _shareholders[mainId][subId];
     }
 
     /**

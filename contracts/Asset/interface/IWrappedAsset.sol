@@ -259,6 +259,12 @@ interface IWrappedAsset is GenericErrors {
         uint256 amount
     ) external;
 
+    function updateBaseAssetInfo(
+        address owner,
+        uint256 mainId,
+        uint256 subId
+    ) external;
+
     /**
      * @dev Gets the wrapped information
      * @param wrappedMainId, unique identifier of property
@@ -267,10 +273,4 @@ interface IWrappedAsset is GenericErrors {
     function getWrappedInfo(
         uint256 wrappedMainId
     ) external view returns (WrappedAssetInfo memory);
-
-    function updateBaseAssetInfo(
-        address owner,
-        uint256 mainId,
-        uint256 subId
-    ) external;
 }

@@ -72,13 +72,13 @@ contract Marketplace is
     ) external initializer {
         __EIP712_init("Voyfinance", "1.0");
         __ReentrancyGuard_init();
+
         if (!baseAasset_.supportsInterface(_ASSET_INTERFACE_ID)) {
             revert UnsupportedInterface();
         }
 
         _baseAsset = IBaseAsset(baseAasset_);
         _setFeeManager(feeManager_);
-
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
@@ -272,17 +272,6 @@ contract Marketplace is
     }
 
     /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(ERC165, AccessControl) returns (bool) {
-        return
-            interfaceId == type(IMarketplace).interfaceId ||
-            super.supportsInterface(interfaceId);
-    }
-
-    /**
      * @dev List an asset based on main id and sub id
      * @dev Checks and validate listed fraction to be greater than min fraction
      * @dev Validates if listed fractions is less than owner current balance
@@ -318,35 +307,6 @@ contract Marketplace is
             revert NotEnoughBalance();
         }
 
-        // uint listedBalance = _listedAssetInfo[mainId][subId][_msgSender()]
-        //     .listedFractions;
-
-        // if (
-        //     baseAssetBalance + listedBalance < listedAssetInfo.listedFractions
-        // ) {
-        //     revert NotEnoughBalance();
-        // }
-
-        // if (listedAssetInfo.listedFractions < listedBalance) {
-        //     _baseAsset.safeTransferFrom(
-        //         address(this),
-        //         _msgSender(),
-        //         mainId,
-        //         subId,
-        //         listedBalance - listedAssetInfo.listedFractions,
-        //         ""
-        //     );
-        // } else if (listedAssetInfo.listedFractions > listedBalance) {
-        //     _baseAsset.safeTransferFrom(
-        //         _msgSender(),
-        //         address(this),
-        //         mainId,
-        //         subId,
-        //         listedAssetInfo.listedFractions - listedBalance,
-        //         ""
-        //     );
-        // }
-
         _listedAssetInfo[mainId][subId][_msgSender()] = listedAssetInfo;
 
         emit AssetListed(_msgSender(), mainId, subId, listedAssetInfo);
@@ -364,17 +324,6 @@ contract Marketplace is
             revert AlreadyUnlisted();
         }
 
-        // uint listedBalnce = _listedAssetInfo[mainId][subId][_msgSender()]
-        //     .listedFractions;
-
-        // _baseAsset.safeTransferFrom(
-        //     address(this),
-        //     _msgSender(),
-        //     mainId,
-        //     subId,
-        //     listedBalnce,
-        //     ""
-        // );
         delete _listedAssetInfo[mainId][subId][_msgSender()];
 
         emit AssetUnlisted(_msgSender(), mainId, subId);
@@ -433,16 +382,7 @@ contract Marketplace is
             ""
         );
 
-        updateBaseAssetInfo(owner, mainId, subId);
-
-        // _baseAsset.safeTransferFrom(
-        //     address(this),
-        //     _msgSender(),
-        //     mainId,
-        //     subId,
-        //     fractionsToBuy,
-        //     ""
-        // );
+        _updateBaseAssetInfo(owner, mainId, subId);
 
         listedAssetInfo.token.safeTransferFrom(_msgSender(), owner, payPrice);
 
@@ -464,6 +404,59 @@ contract Marketplace is
         );
     }
 
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(ERC165, AccessControl) returns (bool) {
+        return
+            interfaceId == type(IMarketplace).interfaceId ||
+            super.supportsInterface(interfaceId);
+    }
+
+    function _updateBaseAssetInfo(
+        address owner,
+        uint256 mainId,
+        uint256 subId
+    ) internal {
+        BaseAssetIdentifiers[] memory ownerAssets = _baseAsset.getOwnerAssets(
+            owner
+        );
+        address[] memory shareholders = _baseAsset.getShareholdersInfo(
+            mainId,
+            subId
+        );
+
+        if (_baseAsset.subBalanceOf(owner, mainId, subId) == 0) {
+            uint256 assetIndex;
+            uint256 ownerIndex;
+
+            for (uint256 i = 0; i < ownerAssets.length; i++) {
+                if (
+                    ownerAssets[i].mainId == mainId &&
+                    ownerAssets[i].subId == subId
+                ) {
+                    assetIndex = i;
+                    break;
+                }
+            }
+            for (uint256 i = 0; i < shareholders.length; i++) {
+                if (shareholders[i] == owner) {
+                    ownerIndex = i;
+                    break;
+                }
+            }
+            _baseAsset.deleteShareholderInfo(
+                owner,
+                mainId,
+                subId,
+                ownerIndex,
+                assetIndex
+            );
+        }
+    }
+
     function _buyOffer(
         uint256 mainId,
         uint256 subId,
@@ -473,9 +466,6 @@ contract Marketplace is
         address buyer,
         address token
     ) private {
-        // uint256 listedBalnce = _listedAssetInfo[mainId][subId][_msgSender()]
-        //     .listedFractions;
-
         uint256 ownerBaseAssetBalance = _baseAsset.subBalanceOf(
             owner,
             mainId,
@@ -485,9 +475,6 @@ contract Marketplace is
         if (fractionsToBuy > ownerBaseAssetBalance) {
             revert NotEnoughBalance();
         }
-        // if (fractionsToBuy > ownerBaseAssetBalance + listedBalnce) {
-        //     revert NotEnoughBalance();
-        // }
 
         uint256 payPrice = offerPrice * fractionsToBuy;
         uint256 fee = _feeManager.getBuyingFee(mainId, subId);
@@ -507,20 +494,7 @@ contract Marketplace is
             ""
         );
 
-        updateBaseAssetInfo(owner, mainId, subId);
-
-        // if (fractionsToBuy > ownerBaseAssetBalance) {
-        //     _baseAsset.safeTransferFrom(
-        //         address(this),
-        //         owner,
-        //         mainId,
-        //         subId,
-        //         fractionsToBuy - ownerBaseAssetBalance,
-        //         ""
-        //     );
-
-        //     delete _listedAssetInfo[mainId][subId][_msgSender()];
-        // }
+        _updateBaseAssetInfo(owner, mainId, subId);
 
         IERC20(token).safeTransferFrom(buyer, owner, payPrice);
         IERC20(token).safeTransferFrom(buyer, _feeManager.getFeeWallet(), fee);
@@ -549,48 +523,5 @@ contract Marketplace is
 
         emit FeeManagerSet(address(_feeManager), newFeeManager);
         _feeManager = IFeeManager(newFeeManager);
-    }
-
-    function updateBaseAssetInfo(
-        address owner,
-        uint256 mainId,
-        uint256 subId
-    ) internal {
-        BaseAssetIdentifiers[] memory ownerAssets = _baseAsset.getOwnerAssets(
-            owner
-        );
-        address[] memory shareholders = _baseAsset.getShareholdersInfo(
-            mainId,
-            subId
-        );
-
-        if (_baseAsset.subBalanceOf(owner, mainId, subId) == 0) {
-            uint256 assetIndex;
-            uint256 ownerIndex;
-
-            for (uint256 i = 0; i < ownerAssets.length; i++) {
-                if (
-                    ownerAssets[i].mainId == mainId &&
-                    ownerAssets[i].subId == subId
-                ) {
-                    assetIndex = i;
-
-                    break;
-                }
-            }
-            for (uint256 i = 0; i < shareholders.length; i++) {
-                if (shareholders[i] == owner) {
-                    ownerIndex = i;
-                    break;
-                }
-            }
-            _baseAsset.deleteShareholderInfo(
-                owner,
-                mainId,
-                subId,
-                ownerIndex,
-                assetIndex
-            );
-        }
     }
 }

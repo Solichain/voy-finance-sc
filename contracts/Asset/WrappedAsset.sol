@@ -31,7 +31,7 @@ contract WrappedAsset is
     Counters.Counter internal _nonce;
     IBaseAsset internal _baseAsset;
 
-    uint256 private immutable CHAIN_ID;
+    uint256 private immutable _chainId;
 
     mapping(uint256 => WrappedAssetInfo) internal _wrappedInfo;
 
@@ -60,7 +60,7 @@ contract WrappedAsset is
         }
 
         _baseAsset = IBaseAsset(baseAsset_);
-        CHAIN_ID = block.chainid;
+        _chainId = block.chainid;
 
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
@@ -246,23 +246,17 @@ contract WrappedAsset is
         _unwrapERC1155(_msgSender(), mainId, subId, amount);
     }
 
-    /**
-     * @dev See {IWrappedAsset-getNonce}.
-     */
-    function getNonce(address account) external view virtual returns (uint256) {
-        return _nonce.current(account);
-    }
-
     function getWrappedInfo(
         uint256 wrappedMainId
     ) external view returns (WrappedAssetInfo memory) {
         return _wrappedInfo[wrappedMainId];
     }
 
-    function isWhitelistedContract(
-        address contractAddress
-    ) public view returns (bool) {
-        return _isWhitelisted[contractAddress];
+    /**
+     * @dev See {IWrappedAsset-getNonce}.
+     */
+    function getNonce(address account) external view virtual returns (uint256) {
+        return _nonce.current(account);
     }
 
     function onERC1155Received(
@@ -298,8 +292,57 @@ contract WrappedAsset is
         revert UnableToReceive();
     }
 
+    function updateBaseAssetInfo(
+        address owner,
+        uint256 mainId,
+        uint256 subId
+    ) public {
+        BaseAssetIdentifiers[] memory ownerAssets = _baseAsset.getOwnerAssets(
+            owner
+        );
+        address[] memory shareholders = _baseAsset.getShareholdersInfo(
+            mainId,
+            subId
+        );
+
+        if (_baseAsset.subBalanceOf(owner, mainId, subId) == 0) {
+            uint256 assetIndex;
+            uint256 ownerIndex;
+
+            for (uint256 i = 0; i < ownerAssets.length; i++) {
+                if (
+                    ownerAssets[i].mainId == mainId &&
+                    ownerAssets[i].subId == subId
+                ) {
+                    assetIndex = i;
+
+                    break;
+                }
+            }
+            for (uint256 i = 0; i < shareholders.length; i++) {
+                if (shareholders[i] == owner) {
+                    ownerIndex = i;
+                    break;
+                }
+            }
+            _baseAsset.deleteShareholderInfo(
+                owner,
+                mainId,
+                subId,
+                ownerIndex,
+                assetIndex
+            );
+        }
+    }
+
+    function isWhitelistedContract(
+        address contractAddress
+    ) public view returns (bool) {
+        return _isWhitelisted[contractAddress];
+    }
+
     function getMainId(address contractAddress) public view returns (uint256) {
-        return uint256(keccak256(abi.encodePacked(CHAIN_ID, contractAddress)));
+        return uint256(keccak256(abi.encodePacked(_chainId, contractAddress)));
     }
 
     function _wrapERC20(
@@ -548,48 +591,5 @@ contract WrappedAsset is
             subId,
             amount
         );
-    }
-
-    function updateBaseAssetInfo(
-        address owner,
-        uint256 mainId,
-        uint256 subId
-    ) public {
-        BaseAssetIdentifiers[] memory ownerAssets = _baseAsset.getOwnerAssets(
-            owner
-        );
-        address[] memory shareholders = _baseAsset.getShareholdersInfo(
-            mainId,
-            subId
-        );
-
-        if (_baseAsset.subBalanceOf(owner, mainId, subId) == 0) {
-            uint256 assetIndex;
-            uint256 ownerIndex;
-
-            for (uint256 i = 0; i < ownerAssets.length; i++) {
-                if (
-                    ownerAssets[i].mainId == mainId &&
-                    ownerAssets[i].subId == subId
-                ) {
-                    assetIndex = i;
-
-                    break;
-                }
-            }
-            for (uint256 i = 0; i < shareholders.length; i++) {
-                if (shareholders[i] == owner) {
-                    ownerIndex = i;
-                    break;
-                }
-            }
-            _baseAsset.deleteShareholderInfo(
-                owner,
-                mainId,
-                subId,
-                ownerIndex,
-                assetIndex
-            );
-        }
     }
 }

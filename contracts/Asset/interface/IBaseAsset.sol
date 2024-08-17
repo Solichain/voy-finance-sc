@@ -79,6 +79,20 @@ interface IBaseAsset is IDLT, IDLTEnumerable, IDLTPermit {
      */
     function setBaseURI(uint256 mainId, string calldata newBaseURI) external;
 
+    function addShareholder(
+        address newOwner,
+        uint256 mainId,
+        uint256 subId
+    ) external;
+
+    function deleteShareholderInfo(
+        address owner,
+        uint256 mainId,
+        uint256 subId,
+        uint256 ownerIndex,
+        uint256 ownerAssetIndex
+    ) external;
+
     /**
      * @dev concatenate asset id (mainId) to baseURI
      * @param mainId, unique identifier of asset type
@@ -109,18 +123,4 @@ interface IBaseAsset is IDLT, IDLTEnumerable, IDLTPermit {
         uint256 mainId,
         uint256 subId
     ) external view returns (address[] memory);
-
-    function addShareholder(
-        address newOwner,
-        uint256 mainId,
-        uint256 subId
-    ) external;
-
-    function deleteShareholderInfo(
-        address owner,
-        uint256 mainId,
-        uint256 subId,
-        uint256 ownerIndex,
-        uint256 ownerAssetIndex
-    ) external;
 }
