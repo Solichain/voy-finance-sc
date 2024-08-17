@@ -30,10 +30,6 @@ The Marketplace serves as the primary contract for trading ERC6960 assets, be it
 
 The Fee Manager enables the admin to set fees for the initial purchase and trading of all ERC6960 assets through the Marketplace. These fees can be configured as defaults for a predefined set of assets or specified by a main ID and sub ID.
 
-## Audits
-
-SoliChain has enlisted the services of ImmuneBytes to perform a security audit on the Marketplace. Over the period from December 15th, 2023, to January 29th, 2024, a team of ImmuneBytes consultants conducted a thorough security review of SoliChain Marketplace. The audit did not reveal any significant flaws that could potentially compromise a smart contract, lead to the loss of funds, or cause unexpected behavior in the target system. You can access their [full report here](<./audits/SoliChain(NFT%20Marketplace)-Audit%20Report-ImmuneBytes.pdf>).
-
 ## Contributing
 
 We welcome contributions to ERC6960 Marketplace from anyone interested in enhancing the project. Contributions may include writing additional tests, improving code readability, optimizing for gas efficiency, or extending the protocol by introducing new asset type contracts or other features.
