@@ -44,4 +44,5 @@ jobs:
         env:
           PRIVATE_KEY: ${{ secrets.WALLET_PRIVATE_KEY }}
           ARCHIVAL_RPC: ${{ secrets.ETHEREUM_ARCHIVAL_RPC }}
-          POLYGONSCAN_API_KEY: ${{ secrets.ETHEREUM_SCAN_API_KEY }}
+          ETHEREUM_API_KEY: ${{ secrets.ETHEREUM_SCAN_API_KEY }}
+          ETHEREUM_CHAIN_ID: ${{ vars.ETHEREUM_CHAIN_ID }}
