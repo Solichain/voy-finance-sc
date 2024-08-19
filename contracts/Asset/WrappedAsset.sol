@@ -12,7 +12,6 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IBaseAsset } from "contracts/Asset/interface/IBaseAsset.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 import { Counters } from "contracts/lib/Counters.sol";
-import "hardhat/console.sol";
 
 /**
  * @title The wrapped asset contract based on ERC6960
