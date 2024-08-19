@@ -46,7 +46,7 @@ module.exports = {
       chainId: Number(ETHEREUM_CHAIN_ID),
       accounts: {
         privateKey: WALLET_PRIVATE_KEY,
-        balance: 20,
+        balance: "0x1bc16d674ec80000",
       },
       initialBaseFeePerGas: 0,
       gasPrice: 0,
