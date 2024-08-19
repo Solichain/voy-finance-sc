@@ -39,13 +39,13 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: ETHEREUM_RPC_URL,
+        url: "https://rpc.ankr.com/eth",
         ignoreUnknownTxType: true,
         blockNumber: 18314577,
       },
-      chainId: Number(ETHEREUM_CHAIN_ID),
+      chainId: 1,
       accounts: {
-        privateKey: WALLET_PRIVATE_KEY,
+        // privateKey: WALLET_PRIVATE_KEY,
         balance: "0x1bc16d674ec80000",
       },
       initialBaseFeePerGas: 0,
