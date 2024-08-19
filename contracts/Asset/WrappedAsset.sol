@@ -458,7 +458,9 @@ contract WrappedAsset is
 
         if (
             wrappedErc1155Info.contractAddress == address(0) ||
-            _subIdIndex[mainId][tokenId] == 0
+            (wrappedErc1155Info.subIds.length > 0 &&
+                _subIdIndex[mainId][tokenId] == 0 &&
+                wrappedErc1155Info.subIds[0] != tokenId)
         ) {
             wrappedErc1155Info.contractAddress = contractAddress;
             wrappedErc1155Info.subIds.push(tokenId);
