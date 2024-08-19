@@ -12,6 +12,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IBaseAsset } from "contracts/Asset/interface/IBaseAsset.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 import { Counters } from "contracts/lib/Counters.sol";
+import "hardhat/console.sol";
 
 /**
  * @title The wrapped asset contract based on ERC6960
@@ -35,7 +36,7 @@ contract WrappedAsset is
 
     mapping(uint256 => WrappedAssetInfo) internal _wrappedInfo;
 
-    mapping(uint256 => mapping(uint256 => uint256)) internal _subidIndex;
+    mapping(uint256 => mapping(uint256 => uint256)) internal _subIdIndex;
 
     mapping(address => bool) private _isWhitelisted;
 
@@ -227,7 +228,7 @@ contract WrappedAsset is
      */
     function unwrapERC721(uint256 mainId, uint256 subId) external {
         if (
-            _wrappedInfo[mainId].fractions[_subidIndex[mainId][subId]] !=
+            _wrappedInfo[mainId].fractions[_subIdIndex[mainId][subId]] !=
             _baseAsset.subBalanceOf(_msgSender(), mainId, subId)
         ) {
             revert PartialOwnership();
@@ -416,6 +417,8 @@ contract WrappedAsset is
         wrappedErc721Info.fractions.push(amount);
         wrappedErc721Info.balances.push(amount);
 
+        _subIdIndex[mainId][tokenId] = wrappedErc721Info.subIds.length - 1;
+
         token.safeTransferFrom(_msgSender(), address(this), tokenId, "");
 
         _baseAsset.createAsset(_msgSender(), mainId, tokenId, amount);
@@ -455,15 +458,15 @@ contract WrappedAsset is
 
         if (
             wrappedErc1155Info.contractAddress == address(0) ||
-            _subidIndex[mainId][tokenId] == 0
+            _subIdIndex[mainId][tokenId] == 0
         ) {
             wrappedErc1155Info.contractAddress = contractAddress;
             wrappedErc1155Info.subIds.push(tokenId);
             wrappedErc1155Info.fractions.push(amount);
             wrappedErc1155Info.balances.push(amount);
-            _subidIndex[mainId][tokenId] = wrappedErc1155Info.subIds.length - 1;
+            _subIdIndex[mainId][tokenId] = wrappedErc1155Info.subIds.length - 1;
         } else {
-            uint256 subIdIndex = _subidIndex[mainId][tokenId];
+            uint256 subIdIndex = _subIdIndex[mainId][tokenId];
             wrappedErc1155Info.fractions[subIdIndex] += amount;
             wrappedErc1155Info.balances[subIdIndex] += amount;
         }
@@ -529,7 +532,7 @@ contract WrappedAsset is
             revert InvalidAddress();
         }
 
-        if (wrappedErc721Info.fractions[_subidIndex[mainId][subId]] == 0) {
+        if (wrappedErc721Info.fractions[_subIdIndex[mainId][subId]] == 0) {
             revert WrongAssetId();
         }
 
@@ -544,14 +547,18 @@ contract WrappedAsset is
 
         token.safeTransferFrom(address(this), receiver, subId, "");
         updateBaseAssetInfo(_msgSender(), mainId, subId);
+
+        uint256 subIdIndex = _subIdIndex[mainId][subId];
+        _wrappedInfo[mainId].subIds[subIdIndex] = 0;
+        _wrappedInfo[mainId].fractions[subIdIndex] = 0;
+        _wrappedInfo[mainId].balances[subIdIndex] = 0;
+
         emit ERC721Unwrapped(
             receiver,
             wrappedErc721Info.contractAddress,
             mainId,
             subId
         );
-
-        delete _wrappedInfo[mainId];
     }
 
     function _unwrapERC1155(
@@ -572,7 +579,7 @@ contract WrappedAsset is
             revert NotEnoughBalance();
         }
 
-        uint256 subIdIndex = _subidIndex[mainId][subId];
+        uint256 subIdIndex = _subIdIndex[mainId][subId];
         wrappedErc1155Info.fractions[subIdIndex] -= amount;
         wrappedErc1155Info.balances[subIdIndex] -= amount;
 

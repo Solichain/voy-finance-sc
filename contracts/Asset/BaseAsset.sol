@@ -73,7 +73,10 @@ contract BaseAsset is
     /**
      * @dev See {IBaseAsset-setBaseURI}.
      */
-    function setBaseURI(uint256 mainId, string calldata newBaseURI) external {
+    function setBaseURI(
+        uint256 mainId,
+        string calldata newBaseURI
+    ) external onlyRole(ASSET_MANAGER) {
         _setBaseURI(mainId, newBaseURI);
     }
 
@@ -175,7 +178,7 @@ contract BaseAsset is
      * @param newBaseURI, String of the asset base URI
      */
     function _setBaseURI(uint256 mainId, string memory newBaseURI) private {
-        emit AssetBaseURISet(mainId, _baseAssetURI[mainId], newBaseURI);
+        // emit AssetBaseURISet(mainId, _baseAssetURI[mainId], newBaseURI);
         _baseAssetURI[mainId] = newBaseURI;
     }
 }

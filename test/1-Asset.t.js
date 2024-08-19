@@ -5,10 +5,11 @@ const { AssetManagerAccess } = require("./helpers/data.spec");
 describe("Asset", function () {
   let assetContract;
   let deployer;
-  let user1;
+  let assetManager;
+  let user;
 
   beforeEach(async () => {
-    [deployer, user1] = await ethers.getSigners();
+    [deployer, assetManager, user] = await ethers.getSigners();
 
     const AssetFactory = await ethers.getContractFactory("BaseAsset");
     assetContract = await AssetFactory.deploy(
@@ -33,11 +34,11 @@ describe("Asset", function () {
     );
   });
 
-  it("Should revert on burning asset by invalid caller", async function () {
+  it("Should revert on creating asset by invalid caller", async function () {
     await expect(
       assetContract
         .connect(deployer)
-        .burnAsset(deployer.getAddress(), 1, 1, 10000)
+        .createAsset(deployer.getAddress(), 1, 1, 10000)
     ).to.be.revertedWith(
       `AccessControl: account ${(
         await deployer.getAddress()
@@ -45,14 +46,29 @@ describe("Asset", function () {
     );
   });
 
+  it("Should revert on burning asset by invalid caller", async function () {
+    await expect(
+      assetContract.connect(user).burnAsset(user.getAddress(), 1, 1, 10000)
+    ).to.be.revertedWith(
+      `AccessControl: account ${(
+        await user.getAddress()
+      ).toLowerCase()} is missing role ${AssetManagerAccess}`
+    );
+  });
+
   it("Should to set new base uri", async function () {
-    await expect(assetContract.setBaseURI(1, "https://ipfs2.io/ipfs")).to.not.be
-      .reverted;
+    await assetContract
+      .connect(deployer)
+      .grantRole(AssetManagerAccess, assetManager);
+
+    await expect(
+      assetContract.connect(assetManager).setBaseURI(1, "https://ipfs2.io/ipfs")
+    ).to.not.be.reverted;
   });
 
   it("Should revert to set new base uri by invalid caller", async function () {
     await expect(
-      assetContract.connect(user1).setBaseURI(1, "https://ipfs2.io/ipfs")
+      assetContract.connect(user).setBaseURI(1, "https://ipfs2.io/ipfs")
     ).to.be.reverted;
 
     await network.provider.request({
