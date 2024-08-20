@@ -36,11 +36,6 @@ This repository contains the implementation of a decentralized marketplace on th
 - **Inherits:** `ERC721`
 - **Purpose:** Mock implementation of an ERC-721 token for testing purposes.
 
-### 7. **MockInvoiceOwner.sol**
-
-- **Interacts with:** `IMarketplace`
-- **Purpose:** Demonstrates interaction with the marketplace, particularly for listing and buying assets.
-
 ## Features
 
 - **ERC-6960 Dual Layer Tokens:** Supports hierarchical tokenization with main and sub-IDs, enabling efficient management of complex assets.

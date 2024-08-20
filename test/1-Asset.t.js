@@ -20,28 +20,39 @@ describe("Asset", function () {
     );
 
     await assetContract.waitForDeployment();
-  });
 
-  it("Should revert on creating asset by invalid caller", async function () {
-    await expect(
-      assetContract
-        .connect(deployer)
-        .createAsset(deployer.getAddress(), 1, 1, 10000)
-    ).to.be.revertedWith(
-      `AccessControl: account ${(
-        await deployer.getAddress()
-      ).toLowerCase()} is missing role ${AssetManagerAccess}`
+
+    await assetContract.grantRole(
+      AssetManagerAccess,
+      deployer.getAddress()
     );
   });
 
   it("Should revert on creating asset by invalid caller", async function () {
     await expect(
       assetContract
-        .connect(deployer)
+        .connect(user)
         .createAsset(deployer.getAddress(), 1, 1, 10000)
     ).to.be.revertedWith(
       `AccessControl: account ${(
-        await deployer.getAddress()
+        await user.getAddress()
+      ).toLowerCase()} is missing role ${AssetManagerAccess}`
+    );
+  });
+
+  it("Should revert on burning asset by invalid caller", async function () {
+
+    assetContract
+      .connect(deployer)
+      .createAsset(deployer.getAddress(), 1, 1, 10000)
+
+    await expect(
+      assetContract
+        .connect(user)
+        .createAsset(deployer.getAddress(), 1, 1, 10000)
+    ).to.be.revertedWith(
+      `AccessControl: account ${(
+        await user.getAddress()
       ).toLowerCase()} is missing role ${AssetManagerAccess}`
     );
   });
@@ -82,5 +93,10 @@ describe("Asset", function () {
         },
       ],
     });
+  });
+
+  it("Should create asset and burn", async function () {
+    expect(await assetContract.connect(deployer).createAsset(await user.getAddress(), 1, 1, 1)).not.to.be.reverted;
+    expect(await assetContract.connect(deployer).burnAsset(await user.getAddress(), 1, 1, 1)).not.to.be.reverted;
   });
 });

@@ -14,6 +14,7 @@ import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { IBaseAsset } from "contracts/Asset/interface/IBaseAsset.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 import { Counters } from "contracts/lib/Counters.sol";
+import "hardhat/console.sol";
 
 /**
  * @title The common marketplace for the all types of ERC-6960 assets
@@ -149,17 +150,17 @@ contract Marketplace is
         uint256[] calldata subIds,
         ListedAssetInfo[] calldata listedAssetInfo
     ) external {
-        uint256 length = subIds.length;
+        uint256 length = mainIds.length;
         if (length > 30) {
             revert BatchLimitExceeded();
         }
 
-        if (mainIds.length != length || length != listedAssetInfo.length) {
+        if (subIds.length != length || length != listedAssetInfo.length) {
             revert NoArrayParity();
         }
+
         for (uint256 i = 0; i < length; ) {
             list(mainIds[i], subIds[i], listedAssetInfo[i]);
-
             unchecked {
                 ++i;
             }
@@ -173,12 +174,12 @@ contract Marketplace is
         uint256[] calldata mainIds,
         uint256[] calldata subIds
     ) external {
-        uint256 length = subIds.length;
+        uint256 length = mainIds.length;
         if (length > 30) {
             revert BatchLimitExceeded();
         }
 
-        if (mainIds.length != length) {
+        if (subIds.length != length) {
             revert NoArrayParity();
         }
         for (uint256 i = 0; i < length; ) {
