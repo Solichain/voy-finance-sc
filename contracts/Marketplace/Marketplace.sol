@@ -14,7 +14,6 @@ import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { IBaseAsset } from "contracts/Asset/interface/IBaseAsset.sol";
 import { Context } from "@openzeppelin/contracts/utils/Context.sol";
 import { Counters } from "contracts/lib/Counters.sol";
-import "hardhat/console.sol";
 
 /**
  * @title The common marketplace for the all types of ERC-6960 assets

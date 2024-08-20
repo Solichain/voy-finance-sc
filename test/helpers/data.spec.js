@@ -14,11 +14,15 @@ const AssetManagerAccess = ethers.keccak256(
   ethers.toUtf8Bytes("ASSET_MANAGER")
 );
 
-
 const DAY = 24n * 60n * 60n;
 const YEAR = 360n * DAY;
 
-const createList = async (fractionPriceInToken, listedFractions, minFraction, token) => {
+const createList = async (
+  fractionPriceInToken,
+  listedFractions,
+  minFraction,
+  token
+) => {
   return {
     fractionPriceInToken,
     listedFractions,
