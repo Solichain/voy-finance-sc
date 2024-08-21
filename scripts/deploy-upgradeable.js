@@ -3,9 +3,6 @@ const { ethers, upgrades } = require("hardhat");
 const { tokenAddress, feeWallet } = require("./data");
 const hre = require("hardhat");
 async function main() {
-  // const MarketplaceAccess = ethers.keccak256(
-  //   ethers.toUtf8Bytes("MARKETPLACE_ROLE")
-  // );
 
   const AssetManagerAccess = ethers.keccak256(
     ethers.toUtf8Bytes("ASSET_MANAGER")
@@ -41,25 +38,6 @@ async function main() {
 
   console.log({ marketplace: await marketplace.getAddress() });
 
-  // const InvoiceAssetFactory = await ethers.getContractFactory("InvoiceAsset");
-  // const invoiceAsset = await upgrades.deployProxy(InvoiceAssetFactory, [
-  //   await asset.getAddress(),
-  //   treasuryWallet,
-  //   await marketplace.getAddress(),
-  // ]);
-  // await invoiceAsset.waitForDeployment();
-
-  // console.log(await invoiceAsset.getAddress());
-
-  // const PropertyAssetFactory = await ethers.getContractFactory("PropertyAsset");
-  // const propertyAsset = await upgrades.deployProxy(PropertyAssetFactory, [
-  //   await asset.getAddress(),
-  //   treasuryWallet,
-  // ]);
-  // await propertyAsset.waitForDeployment();
-
-  // console.log(await propertyAsset.getAddress());
-
   const WrapperFactory = await ethers.getContractFactory("WrappedAsset");
   const wrapperAsset = await WrapperFactory.deploy(await asset.getAddress());
   await wrapperAsset.waitForDeployment();
@@ -73,14 +51,7 @@ async function main() {
   await token.approve(marketplaceAddress, ethers.MaxUint256);
 
   await asset.grantRole(AssetManagerAccess, marketplaceAddress);
-
-  // await asset.grantRole(AssetManagerAccess, invoiceAsset.getAddress());
-
-  // await asset.grantRole(AssetManagerAccess, propertyAsset.getAddress());
-
   await asset.grantRole(AssetManagerAccess, wrapperAssetAddress);
-
-  // await invoiceAsset.grantRole(MarketplaceAccess, marketplaceAddress);
 
   await asset.setApprovalForAll(marketplaceAddress, true);
 

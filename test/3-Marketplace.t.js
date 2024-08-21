@@ -47,6 +47,11 @@ describe("Marketplace", function () {
     );
 
     await assetContract.grantRole(AssetManagerAccess, deployer.getAddress());
+    await assetContract.grantRole(AssetManagerAccess, marketplaceContract.getAddress());
+    await assetContract.grantRole(
+      MarketplaceAccess,
+      marketplaceContract.getAddress()
+    );
 
     await assetContract.setBaseURI(2, "https://ipfs.io/ipfs");
 
@@ -57,11 +62,6 @@ describe("Marketplace", function () {
     await assetContract
       .connect(user1)
       .setApprovalForAll(marketplaceContract.getAddress(), true);
-
-    await assetContract.grantRole(
-      MarketplaceAccess,
-      marketplaceContract.getAddress()
-    );
   });
 
   it("Should revert to initialize the contract twice", async function () {
@@ -467,5 +467,17 @@ describe("Marketplace", function () {
     await expect(
       marketplaceContract.connect(buyer).buy(1, 1, 1, user1.getAddress())
     ).to.be.reverted;
+  });
+
+  it("Should return address's nonce", async function () {
+    expect(
+      await marketplaceContract.getNonce(deployer.getAddress())
+    ).to.be.eq(0);
+  });
+
+  it("Should return domain separator", async function () {
+    expect(
+      await marketplaceContract.DOMAIN_SEPARATOR()
+    ).not.to.be.reverted;
   });
 });

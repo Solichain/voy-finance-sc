@@ -325,6 +325,7 @@ contract WrappedAsset is
                     break;
                 }
             }
+
             _baseAsset.deleteShareholderInfo(
                 owner,
                 mainId,

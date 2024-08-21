@@ -66,7 +66,6 @@ contract BaseAsset is
         uint256 amount
     ) external onlyRole(ASSET_MANAGER) {
         _burn(owner, mainId, subId, amount);
-
         emit AssetBurnt(owner, mainId, subId, amount);
     }
 
@@ -95,7 +94,7 @@ contract BaseAsset is
         address newOwner,
         uint256 mainId,
         uint256 subId
-    ) public {
+    ) public override onlyRole(ASSET_MANAGER) {
         if (subBalanceOf(newOwner, mainId, subId) == 0) {
             _ownerAssets[newOwner].push(BaseAssetIdentifiers(mainId, subId));
             _shareholders[mainId][subId].push(newOwner);
@@ -108,7 +107,7 @@ contract BaseAsset is
         uint256 subId,
         uint256 ownerIndex,
         uint256 assetIndex
-    ) public override {
+    ) public override onlyRole(ASSET_MANAGER) {
         delete _shareholders[mainId][subId][ownerIndex];
         delete _ownerAssets[owner][assetIndex];
     }
