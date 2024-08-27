@@ -3,7 +3,6 @@ const { ethers, upgrades } = require("hardhat");
 const { tokenAddress, feeWallet } = require("./data");
 const hre = require("hardhat");
 async function main() {
-
   const AssetManagerAccess = ethers.keccak256(
     ethers.toUtf8Bytes("ASSET_MANAGER")
   );

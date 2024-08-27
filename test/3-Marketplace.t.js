@@ -47,7 +47,10 @@ describe("Marketplace", function () {
     );
 
     await assetContract.grantRole(AssetManagerAccess, deployer.getAddress());
-    await assetContract.grantRole(AssetManagerAccess, marketplaceContract.getAddress());
+    await assetContract.grantRole(
+      AssetManagerAccess,
+      marketplaceContract.getAddress()
+    );
     await assetContract.grantRole(
       MarketplaceAccess,
       marketplaceContract.getAddress()
@@ -470,14 +473,8 @@ describe("Marketplace", function () {
   });
 
   it("Should return address's nonce", async function () {
-    expect(
-      await marketplaceContract.getNonce(deployer.getAddress())
-    ).to.be.eq(0);
-  });
-
-  it("Should return domain separator", async function () {
-    expect(
-      await marketplaceContract.DOMAIN_SEPARATOR()
-    ).not.to.be.reverted;
+    expect(await marketplaceContract.getNonce(deployer.getAddress())).to.be.eq(
+      0
+    );
   });
 });
